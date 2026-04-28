@@ -1,0 +1,56 @@
+{
+  "propriedades": [
+    {
+      "id": "1",
+      "titulo": "Apartamento Centro Prime",
+      "localizacao": "2118 Thornridge Cir.",
+      "preco": "R$3200",
+      "status": "Disponível",
+      "tipo": "Villa",
+      "quartos": 4,
+      "hospedes": 5,
+      "nota": 4,
+      "descricao": "Imóvel sofisticado localizado em região central, ideal para estadias executivas e viagens em família.",
+      "imagem": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+      "categorias": [
+        "villa",
+        "4 quartos"
+      ]
+    },
+    {
+      "id": "2",
+      "titulo": "Lodge Vista Montanha",
+      "localizacao": "2464 Royal Ln. Mesa.",
+      "preco": "R$3000",
+      "status": "Ativo",
+      "tipo": "Cabana",
+      "quartos": 3,
+      "hospedes": 5,
+      "nota": 4,
+      "descricao": "Cabana aconchegante com vista para montanhas, perfeita para descanso e experiências premium.",
+      "imagem": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+      "categorias": [
+        "cabana",
+        "3 quartos"
+      ]
+    },
+    {
+      "id": "3",
+      "titulo": "Resort Beira-Mar",
+      "localizacao": "2972 Westheimer Rd.",
+      "preco": "R$3500",
+      "status": "Ativo",
+      "tipo": "Resort",
+      "quartos": 2,
+      "hospedes": 4,
+      "nota": 5,
+      "descricao": "Resort com localização privilegiada, estrutura moderna e acesso próximo à praia.",
+      "imagem": "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=1200&q=80",
+      "categorias": [
+        "resort",
+        "2 quartos"
+      ]
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}
