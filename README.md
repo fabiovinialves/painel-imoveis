@@ -2,6 +2,13 @@
 
 Sistema web para gerenciamento e aluguel de imóveis, com área administrativa e area do cliente. O projeto permite cadastrar propriedades, acompanhar status dos imóveis, criar clientes, realizar alugueis, escolher datas, selecionar pagamento por Pix ou cartão de crédito, parcelar no cartão e avaliar propriedades alugadas.
 
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=FFD62E)
+![React Router DOM](https://img.shields.io/badge/React_Router_DOM-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-0F172A?style=for-the-badge&logo=tailwindcss&logoColor=38BDF8)
+![Lucide React](https://img.shields.io/badge/Lucide_React-111827?style=for-the-badge&logo=lucide&logoColor=white)
+![JSON Server](https://img.shields.io/badge/JSON_Server-323330?style=for-the-badge&logo=json&logoColor=white)
+
 ## Funcionalidades
 
 - Dashboard administrativo com indicadores dos imóveis.
@@ -134,7 +141,7 @@ Para gerar a build final:
 npm run build
 ```
 
-Depois, os arquivos de producao estarao na pasta:
+Depois, os arquivos de produção estarão na pasta:
 
 ```text
 dist/
