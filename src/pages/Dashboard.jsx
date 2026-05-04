@@ -1,5 +1,6 @@
 import { Building2, CalendarCheck, CircleDollarSign, Star } from 'lucide-react';
 import CardMetrica from '../components/common/CardMetrica';
+import { formatarNota } from '../utils/formatadores';
 
 function Dashboard({ propriedades, avaliacoes = [] }) {
   const total = propriedades.length;
@@ -9,12 +10,12 @@ function Dashboard({ propriedades, avaliacoes = [] }) {
   const reservados = propriedades.filter((item) => item.status === 'Reservado').length;
   const avaliacaoMedia =
     avaliacoes.length === 0
-      ? '0.0'
-      : (
+      ? formatarNota(0)
+      : formatarNota(
           avaliacoes.reduce((totalAvaliacoes, avaliacao) => {
             return totalAvaliacoes + Number(avaliacao.nota);
           }, 0) / avaliacoes.length
-        ).toFixed(1);
+        );
 
   return (
     <section className="space-y-6">

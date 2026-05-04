@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import LayoutPrincipal from './components/layout/LayoutPrincipal';
 import Cabecalho from './components/layout/Cabecalho';
 import MenuLateral from './components/layout/MenuLateral';
@@ -10,6 +10,8 @@ import DetalhesPropriedade from './pages/DetalhesPropriedade';
 import Usuarios from './pages/Usuarios';
 import Cliente from './pages/Cliente';
 import Avaliacoes from './pages/Avaliacoes';
+import LoginAdmin from './pages/LoginAdmin';
+import ConfiguracoesAdmin from './pages/ConfiguracoesAdmin';
 import {
   atualizarPropriedade,
   criarPropriedade,
@@ -18,6 +20,14 @@ import {
 
 const STORAGE_CLIENTES = 'vooarp_clientes';
 const STORAGE_AVALIACOES = 'vooarp_avaliacoes';
+const STORAGE_ADMIN = 'vooarp_admin_logado';
+const STORAGE_ADMIN_CONTA = 'vooarp_admin_conta';
+const STORAGE_CLIENTE_LOGADO = 'vooarp_cliente_logado';
+const ADMINISTRADOR_PADRAO = {
+  nome: 'Administrador',
+  email: 'admin@travel.com',
+  senha: 'admin123',
+};
 
 function deduplicarAvaliacoes(avaliacoes) {
   const avaliacoesPorClienteEPropriedade = new Map();
@@ -52,11 +62,31 @@ function lerAvaliacoesSalvas() {
   }
 }
 
+function lerAdminSalvo() {
+  try {
+    const admin = localStorage.getItem(STORAGE_ADMIN);
+    return admin ? JSON.parse(admin) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function lerContaAdminSalva() {
+  try {
+    const conta = localStorage.getItem(STORAGE_ADMIN_CONTA);
+    return conta ? { ...ADMINISTRADOR_PADRAO, ...JSON.parse(conta) } : ADMINISTRADOR_PADRAO;
+  } catch (error) {
+    return ADMINISTRADOR_PADRAO;
+  }
+}
+
 function App() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [propriedades, setPropriedades] = useState([]);
   const [clientes, setClientes] = useState(lerClientesSalvos);
   const [avaliacoes, setAvaliacoes] = useState(lerAvaliacoesSalvas);
+  const [contaAdmin, setContaAdmin] = useState(lerContaAdminSalva);
+  const [adminLogado, setAdminLogado] = useState(lerAdminSalvo);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
@@ -92,6 +122,55 @@ function App() {
   function fecharFormulario() {
     setModalAberto(false);
     setPropriedadeEditando(null);
+  }
+
+  function entrarAdmin(email, senha) {
+    const emailNormalizado = email.trim().toLowerCase();
+
+    if (emailNormalizado !== contaAdmin.email || senha !== contaAdmin.senha) {
+      return false;
+    }
+
+    const admin = {
+      nome: contaAdmin.nome,
+      email: contaAdmin.email,
+    };
+    setAdminLogado(admin);
+    localStorage.setItem(STORAGE_ADMIN, JSON.stringify(admin));
+    return true;
+  }
+
+  function entrarCliente(email, senha) {
+    const emailNormalizado = email.trim().toLowerCase();
+    const cliente = clientes.find(
+      (item) => item.email === emailNormalizado && item.senha === senha
+    );
+
+    if (!cliente) {
+      return false;
+    }
+
+    localStorage.setItem(STORAGE_CLIENTE_LOGADO, JSON.stringify(cliente));
+    return true;
+  }
+
+  function sairAdmin() {
+    setAdminLogado(null);
+    localStorage.removeItem(STORAGE_ADMIN);
+    setMenuAberto(false);
+    fecharFormulario();
+  }
+
+  function salvarContaAdmin(contaAtualizada) {
+    setContaAdmin(contaAtualizada);
+    localStorage.setItem(STORAGE_ADMIN_CONTA, JSON.stringify(contaAtualizada));
+
+    const admin = {
+      nome: contaAtualizada.nome,
+      email: contaAtualizada.email,
+    };
+    setAdminLogado(admin);
+    localStorage.setItem(STORAGE_ADMIN, JSON.stringify(admin));
   }
 
   async function salvarPropriedade(propriedadeSalva) {
@@ -203,10 +282,25 @@ function App() {
   }
 
   function ConteudoAdmin() {
+    if (!adminLogado) {
+      return <LoginAdmin aoEntrarAdmin={entrarAdmin} aoEntrarCliente={entrarCliente} />;
+    }
+
     return (
       <LayoutPrincipal
-        cabecalho={<Cabecalho aoAbrirMenu={() => setMenuAberto(true)} />}
-        menuLateral={<MenuLateral aberto={menuAberto} aoFechar={() => setMenuAberto(false)} />}
+        cabecalho={
+          <Cabecalho
+            aoAbrirMenu={() => setMenuAberto(true)}
+            administrador={adminLogado}
+          />
+        }
+        menuLateral={
+          <MenuLateral
+            aberto={menuAberto}
+            aoFechar={() => setMenuAberto(false)}
+            aoSair={sairAdmin}
+          />
+        }
       >
         {carregando && (
           <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
@@ -222,10 +316,10 @@ function App() {
 
         {!carregando && !erro && (
           <Routes>
-            <Route path="/" element={<Dashboard propriedades={propriedades} avaliacoes={avaliacoes} />} />
+            <Route index element={<Dashboard propriedades={propriedades} avaliacoes={avaliacoes} />} />
 
             <Route
-              path="/propriedades"
+              path="propriedades"
               element={
                 <Propriedades
                   propriedades={propriedades}
@@ -236,15 +330,24 @@ function App() {
             />
 
             <Route
-              path="/propriedades/:id"
+              path="propriedades/:id"
               element={<DetalhesPropriedade propriedades={propriedades} />}
             />
 
-            <Route path="/usuarios" element={<Usuarios clientes={clientes} propriedades={propriedades} />} />
-            <Route path="/usuários" element={<Usuarios clientes={clientes} propriedades={propriedades} />} />
+            <Route path="usuarios" element={<Usuarios clientes={clientes} propriedades={propriedades} />} />
+            <Route path="usuários" element={<Usuarios clientes={clientes} propriedades={propriedades} />} />
             <Route
-              path="/avaliacoes"
+              path="avaliacoes"
               element={<Avaliacoes avaliacoes={avaliacoes} propriedades={propriedades} />}
+            />
+            <Route
+              path="configuracoes"
+              element={
+                <ConfiguracoesAdmin
+                  administrador={contaAdmin}
+                  aoSalvar={salvarContaAdmin}
+                />
+              }
             />
           </Routes>
         )}
@@ -252,33 +355,42 @@ function App() {
     );
   }
 
+  function ConteudoCliente() {
+    if (carregando) {
+      return (
+        <div className="min-h-screen bg-slate-100 p-6 text-center text-slate-500">
+          Carregando imoveis...
+        </div>
+      );
+    }
+
+    if (erro) {
+      return <div className="min-h-screen bg-slate-100 p-6 text-center text-red-600">{erro}</div>;
+    }
+
+    return (
+      <Cliente
+        propriedades={propriedades}
+        clientes={clientes}
+        avaliacoes={avaliacoes}
+        aoEntrarAdmin={entrarAdmin}
+        aoCadastrarCliente={cadastrarCliente}
+        aoAlugar={alugarPropriedade}
+        aoCancelarAluguel={liberarPropriedade}
+        aoAvaliar={salvarAvaliacao}
+        aoExcluirAvaliacao={excluirAvaliacao}
+      />
+    );
+  }
+
   return (
     <>
       <Routes>
-        <Route
-          path="/cliente"
-          element={
-            carregando ? (
-              <div className="min-h-screen bg-slate-100 p-6 text-center text-slate-500">
-                Carregando imoveis...
-              </div>
-            ) : erro ? (
-              <div className="min-h-screen bg-slate-100 p-6 text-center text-red-600">{erro}</div>
-            ) : (
-              <Cliente
-                propriedades={propriedades}
-                clientes={clientes}
-                avaliacoes={avaliacoes}
-                aoCadastrarCliente={cadastrarCliente}
-                aoAlugar={alugarPropriedade}
-                aoCancelarAluguel={liberarPropriedade}
-                aoAvaliar={salvarAvaliacao}
-                aoExcluirAvaliacao={excluirAvaliacao}
-              />
-            )
-          }
-        />
-        <Route path="/*" element={<ConteudoAdmin />} />
+        <Route path="/" element={<ConteudoCliente />} />
+        <Route path="/login" element={<LoginAdmin aoEntrarAdmin={entrarAdmin} aoEntrarCliente={entrarCliente} />} />
+        <Route path="/cliente" element={<ConteudoCliente />} />
+        <Route path="/admin/*" element={<ConteudoAdmin />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       <FormularioPropriedade

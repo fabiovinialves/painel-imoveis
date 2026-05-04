@@ -2,21 +2,23 @@ import { Link } from 'react-router-dom';
 import { MapPin, Pencil, Wallet, Eye, Star } from 'lucide-react';
 import Etiqueta from '../common/Etiqueta';
 import SeloStatus from '../common/SeloStatus';
+import GaleriaFotosPropriedade from '../common/GaleriaFotosPropriedade';
+import { formatarNota } from '../../utils/formatadores';
 
 function CardPropriedade({ propriedade, aoEditar }) {
   return (
     <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative h-52 overflow-hidden sm:h-56">
-        <img
-          src={propriedade.imagem}
-          alt={propriedade.titulo}
-          className="h-full w-full object-cover transition duration-500 hover:scale-105"
-        />
+      <GaleriaFotosPropriedade
+        propriedade={propriedade}
+        alt={propriedade.titulo}
+        className="h-52 sm:h-56"
+        imagemClassName="transition duration-500 hover:scale-105"
+      >
         <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow">
           <Star size={14} className="fill-yellow-400 text-yellow-400" />
-          {propriedade.nota}
+          {formatarNota(propriedade.nota)}
         </div>
-      </div>
+      </GaleriaFotosPropriedade>
 
       <div className="space-y-4 p-4">
         <div className="flex items-start justify-between gap-3">
@@ -54,7 +56,7 @@ function CardPropriedade({ propriedade, aoEditar }) {
           </button>
 
           <Link
-            to={`/propriedades/${propriedade.id}`}
+            to={`/admin/propriedades/${propriedade.id}`}
             className="flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
           >
             <Eye size={15} />

@@ -2,6 +2,8 @@ import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, BedDouble, MapPin, Star, Users } from 'lucide-react';
 import SeloStatus from '../components/common/SeloStatus';
 import Etiqueta from '../components/common/Etiqueta';
+import { formatarNota } from '../utils/formatadores';
+import GaleriaFotosPropriedade from '../components/common/GaleriaFotosPropriedade';
 
 function DetalhesPropriedade({ propriedades }) {
   const { id } = useParams();
@@ -11,7 +13,7 @@ function DetalhesPropriedade({ propriedades }) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
         <h2 className="text-xl font-bold text-slate-900">Imóvel não encontrado</h2>
-        <Link to="/propriedades" className="mt-4 inline-block text-sm font-semibold text-blue-700">
+        <Link to="/admin/propriedades" className="mt-4 inline-block text-sm font-semibold text-blue-700">
           Voltar para propriedades
         </Link>
       </div>
@@ -20,14 +22,16 @@ function DetalhesPropriedade({ propriedades }) {
 
   return (
     <section className="space-y-5">
-      <Link to="/propriedades" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900">
+      <Link to="/admin/propriedades" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900">
         <ArrowLeft size={16} /> Voltar
       </Link>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="h-72 overflow-hidden lg:h-96">
-          <img src={propriedade.imagem} alt={propriedade.titulo} className="h-full w-full object-cover" />
-        </div>
+        <GaleriaFotosPropriedade
+          propriedade={propriedade}
+          alt={propriedade.titulo}
+          className="h-72 lg:h-96"
+        />
 
         <div className="space-y-6 p-5 lg:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -65,7 +69,7 @@ function DetalhesPropriedade({ propriedades }) {
             <div className="rounded-2xl bg-slate-50 p-5">
               <Star className="fill-yellow-400 text-yellow-400" />
               <p className="mt-3 text-sm text-slate-500">Avaliação</p>
-              <strong className="text-2xl text-slate-900">{propriedade.nota}</strong>
+              <strong className="text-2xl text-slate-900">{formatarNota(propriedade.nota)}</strong>
             </div>
           </div>
         </div>

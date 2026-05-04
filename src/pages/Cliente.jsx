@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BedDouble,
   Building2,
@@ -8,12 +9,16 @@ import {
   Copy,
   CreditCard,
   Eye,
+  Globe2,
+  Heart,
   Hotel,
   LogOut,
   Mail,
+  Menu,
   MapPin,
   QrCode,
   Search,
+  ShieldCheck,
   Star,
   Trash2,
   UserRound,
@@ -23,6 +28,9 @@ import {
 } from 'lucide-react';
 import BotaoPrimario from '../components/common/BotaoPrimario';
 import SeloStatus from '../components/common/SeloStatus';
+import GaleriaFotosPropriedade from '../components/common/GaleriaFotosPropriedade';
+import { formatarNota } from '../utils/formatadores';
+import { obterFotoPrincipalPropriedade, obterFotosPropriedade } from '../utils/propriedades';
 
 const STORAGE_CLIENTE = 'vooarp_cliente_logado';
 const STORAGE_ALUGUEIS = 'vooarp_alugueis';
@@ -220,16 +228,20 @@ function Cliente({
   propriedades,
   clientes,
   avaliacoes = [],
+  aoEntrarAdmin,
   aoCadastrarCliente,
   aoAlugar,
   aoCancelarAluguel,
   aoAvaliar,
   aoExcluirAvaliacao,
 }) {
+  const navigate = useNavigate();
   const [clienteLogado, setClienteLogado] = useState(() => lerStorage(STORAGE_CLIENTE, null));
   const [alugueis, setAlugueis] = useState(() => lerStorage(STORAGE_ALUGUEIS, []));
   const [avaliacoesFormulario, setAvaliacoesFormulario] = useState({});
   const [modo, setModo] = useState('entrar');
+  const [modalAcesso, setModalAcesso] = useState(null);
+  const [menuContaAberto, setMenuContaAberto] = useState(false);
   const [busca, setBusca] = useState('');
   const [mensagem, setMensagem] = useState('');
   const [propriedadeSelecionada, setPropriedadeSelecionada] = useState(null);
@@ -294,7 +306,8 @@ function Cliente({
           localizacao: propriedadeAtual?.localizacao || aluguel.localizacao,
           preco: propriedadeAtual?.preco || aluguel.preco,
           status: propriedadeAtual?.status || aluguel.status,
-          imagem: propriedadeAtual?.imagem,
+          imagem: propriedadeAtual ? obterFotoPrincipalPropriedade(propriedadeAtual) : aluguel.imagem,
+          imagens: propriedadeAtual ? obterFotosPropriedade(propriedadeAtual) : aluguel.imagens,
           descricao: propriedadeAtual?.descricao,
           quartos: propriedadeAtual?.quartos,
           hospedes: propriedadeAtual?.hospedes,
@@ -381,6 +394,7 @@ function Cliente({
     salvarStorage(STORAGE_CLIENTE, novoCliente);
     limparFormulario();
     setMensagem('Cadastro criado');
+    setModalAcesso(null);
   }
 
   function entrarCliente(event) {
@@ -400,6 +414,21 @@ function Cliente({
     salvarStorage(STORAGE_CLIENTE, cliente);
     limparFormulario();
     setMensagem('');
+    setModalAcesso(null);
+  }
+
+  function entrarAdminPublico(event) {
+    event.preventDefault();
+
+    if (!aoEntrarAdmin || !aoEntrarAdmin(formulario.email, formulario.senha)) {
+      setMensagem('Email ou senha invalidos para administrador.');
+      return;
+    }
+
+    limparFormulario();
+    setMensagem('');
+    setModalAcesso(null);
+    navigate('/admin');
   }
 
   function sairCliente() {
@@ -456,6 +485,14 @@ function Cliente({
   }
 
   async function alugarPropriedade(propriedade) {
+    if (!clienteLogado) {
+      setPropriedadeSelecionada(null);
+      setModalAcesso('cliente');
+      setModo('entrar');
+      setMensagem('Entre como cliente para concluir o aluguel.');
+      return;
+    }
+
     const aluguelExistente = alugueisVisiveisCliente.some(
       (aluguel) => String(aluguel.propriedadeId) === String(propriedade.id)
     );
@@ -635,20 +672,47 @@ function Cliente({
 
   return (
     <main className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white px-4 py-4 shadow-sm">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-600 text-white">
               <Hotel size={22} />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-blue-700">StayHub Cliente</h1>
-              <p className="text-sm text-slate-500">Escolha onde quer ficar</p>
+              <h1 className="text-xl font-extrabold text-rose-600">StayHub</h1>
+              <p className="text-sm text-slate-500">Acomodações para alugar</p>
             </div>
           </div>
 
-          {clienteLogado && (
-            <div className="flex flex-wrap items-center gap-3">
+          {!clienteLogado && (
+            <div className="order-3 grid rounded-full border border-slate-200 bg-white p-2 shadow-sm lg:order-2 lg:min-w-[520px] lg:grid-cols-[1fr_1fr_auto]">
+              <label className="min-w-0 px-4 py-1">
+                <span className="block text-xs font-bold text-slate-900">Onde</span>
+                <input
+                  type="search"
+                  value={busca}
+                  onChange={(event) => setBusca(event.target.value)}
+                  placeholder="Buscar destinos"
+                  className="w-full border-none bg-transparent text-sm text-slate-600 outline-none placeholder:text-slate-400"
+                />
+              </label>
+              <div className="hidden border-l border-slate-200 px-4 py-1 sm:block">
+                <span className="block text-xs font-bold text-slate-900">Quando</span>
+                <span className="text-sm text-slate-500">Insira as datas</span>
+              </div>
+              <button
+                type="button"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-600 text-white transition hover:bg-rose-700"
+                aria-label="Buscar"
+              >
+                <Search size={20} />
+              </button>
+            </div>
+          )}
+
+          <div className="order-2 flex flex-wrap items-center gap-3 lg:order-3">
+            {clienteLogado ? (
+              <>
               <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
                 {clienteLogado.nome}
               </div>
@@ -660,129 +724,133 @@ function Cliente({
                 <LogOut size={16} />
                 Sair
               </button>
-            </div>
-          )}
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalAcesso('cliente');
+                    setModo('entrar');
+                    setMensagem('');
+                    setMenuContaAberto(false);
+                  }}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Login cliente
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalAcesso('admin');
+                    setModo('entrar');
+                    setMensagem('');
+                    setMenuContaAberto(false);
+                  }}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Login admin
+                </button>
+                <button
+                  type="button"
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700"
+                  aria-label="Idioma"
+                >
+                  <Globe2 size={18} />
+                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMenuContaAberto((aberto) => !aberto)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                    aria-label="Menu"
+                    aria-expanded={menuContaAberto}
+                  >
+                    <Menu size={18} />
+                  </button>
+
+                  {menuContaAberto && (
+                    <div className="absolute right-0 top-12 z-50 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalAcesso('cliente');
+                          setModo('cadastro');
+                          setMensagem('');
+                          setMenuContaAberto(false);
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        <UserPlus size={17} />
+                        Criar conta
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {!clienteLogado ? (
-          <section className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-              <p className="text-sm font-medium text-slate-400">Area do cliente</p>
-              <h2 className="mt-1 text-2xl font-bold text-slate-900">
-                {modo === 'entrar' ? 'Entrar como cliente' : 'Cadastrar cliente'}
-              </h2>
+          <section className="space-y-12">
+            <div className="pt-2">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+                  Acomodações muito procuradas
+                </h2>
+              </div>
             </div>
 
-            <div className="mb-5 grid grid-cols-2 rounded-full bg-slate-100 p-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setModo('entrar');
-                  setMensagem('');
-                }}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  modo === 'entrar' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'
-                }`}
-              >
-                Entrar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setModo('cadastro');
-                  setMensagem('');
-                }}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  modo === 'cadastro' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'
-                }`}
-              >
-                Cadastrar
-              </button>
-            </div>
-
-            <form className="space-y-4" onSubmit={modo === 'entrar' ? entrarCliente : cadastrarCliente}>
-              {modo === 'cadastro' && (
-                <>
-                  <input
-                    type="text"
-                    value={formulario.nome}
-                    onChange={(event) => atualizarFormulario('nome', event.target.value)}
-                    placeholder="Nome completo"
-                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
-                  />
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition focus-within:border-slate-400 focus-within:ring-4 focus-within:ring-slate-100">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Telefone brasileiro
-                    </p>
-                    <div className="grid grid-cols-[96px_1fr] gap-3 sm:grid-cols-[132px_1fr]">
-                      <label className="min-w-0">
-                        <span className="sr-only">DDD</span>
-                        <select
-                          value={formulario.ddd}
-                          onChange={(event) => atualizarFormulario('ddd', event.target.value)}
-                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition hover:bg-white focus:border-slate-400"
-                        >
-                          {dddsBrasil.map((grupo) => (
-                            <optgroup key={grupo.uf} label={grupo.uf}>
-                              {grupo.codigos.map((ddd) => (
-                                <option key={ddd} value={ddd}>
-                                  {ddd}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label className="flex h-12 min-w-0 items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition focus-within:border-slate-400">
-                        <span className="flex h-full items-center border-r border-slate-200 px-3 text-sm font-bold text-slate-500">
-                          +55
+            {propriedadesDisponiveis.length > 0 ? (
+              <div id="propriedades" className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+                {propriedadesDisponiveis.map((propriedade) => (
+                  <article key={propriedade.id} className="group min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => selecionarPropriedade(propriedade)}
+                      className="block w-full min-w-0 text-left"
+                    >
+                      <GaleriaFotosPropriedade
+                        propriedade={propriedade}
+                        alt={propriedade.titulo}
+                        className="aspect-square rounded-2xl"
+                        imagemClassName="transition duration-500 group-hover:scale-105"
+                      >
+                        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold text-slate-800 shadow">
+                          Preferido dos hóspedes
                         </span>
-                        <input
-                          type="tel"
-                          inputMode="numeric"
-                          value={formatarTelefone(formulario.telefone)}
-                          onChange={(event) =>
-                            atualizarFormulario(
-                              'telefone',
-                              event.target.value.replace(/\D/g, '').slice(0, 9)
-                            )
-                          }
-                          placeholder="99999-9999"
-                          className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <input
-                type="email"
-                value={formulario.email}
-                onChange={(event) => atualizarFormulario('email', event.target.value)}
-                placeholder="Email"
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
-              />
-              <input
-                type="password"
-                value={formulario.senha}
-                onChange={(event) => atualizarFormulario('senha', event.target.value)}
-                placeholder="Senha"
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
-              />
-
-              {mensagem && (
-                <p className="rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-600">{mensagem}</p>
-              )}
-
-              <BotaoPrimario type="submit" className="w-full">
-                {modo === 'entrar' ? <Mail size={16} /> : <UserPlus size={16} />}
-                {modo === 'entrar' ? 'Entrar' : 'Criar conta'}
-              </BotaoPrimario>
-            </form>
+                        <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/20 text-white transition group-hover:bg-black/35">
+                          <Heart size={20} />
+                        </span>
+                      </GaleriaFotosPropriedade>
+                      <div className="mt-3 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="min-w-0 truncate text-sm font-bold text-slate-950">
+                            {propriedade.titulo}
+                          </h3>
+                          <span className="flex shrink-0 items-center gap-1 text-sm text-slate-700">
+                            <Star size={13} className="fill-slate-900 text-slate-900" />
+                            {formatarNota(propriedade.nota)}
+                          </span>
+                        </div>
+                        <p className="mt-1 truncate text-sm text-slate-500">{propriedade.localizacao}</p>
+                        <p className="mt-1 text-sm text-slate-500">8 - 10 de mai.</p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          <span className="font-semibold text-slate-950">{propriedade.preco}</span> total
+                        </p>
+                      </div>
+                    </button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm">
+                Nenhuma propriedade disponivel para aluguel agora.
+              </div>
+            )}
           </section>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
@@ -891,15 +959,11 @@ function Cliente({
                     return (
                       <div key={aluguel.id} className="overflow-hidden rounded-2xl bg-slate-50">
                         <div className="grid gap-0 lg:grid-cols-[220px_1fr]">
-                          <div className="h-48 overflow-hidden bg-slate-200 lg:h-full">
-                            {aluguel.imagem && (
-                              <img
-                                src={aluguel.imagem}
-                                alt={aluguel.propriedadeTitulo}
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
+                          <GaleriaFotosPropriedade
+                            propriedade={aluguel}
+                            alt={aluguel.propriedadeTitulo}
+                            className="h-48 lg:h-full"
+                          />
 
                           <div className="p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -949,7 +1013,7 @@ function Cliente({
                               <div className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-3 py-2">
                                 <Star size={17} className="shrink-0 fill-yellow-400 text-yellow-400" />
                                 <span className="min-w-0 leading-5">
-                                  Nota <strong className="font-semibold text-slate-900">{aluguel.nota || 0}</strong>
+                                  Nota <strong className="font-semibold text-slate-900">{formatarNota(aluguel.nota || 0)}</strong>
                                 </span>
                               </div>
                               <div className="flex min-h-12 items-center gap-3 rounded-2xl bg-white px-3 py-2">
@@ -1043,7 +1107,7 @@ function Cliente({
                               className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-100"
                             >
                               <Star size={16} />
-                              Salvar avaliacao
+                              Salvar avaliação
                             </button>
                           </div>
                         )}
@@ -1075,7 +1139,7 @@ function Cliente({
                               className="inline-flex items-center justify-center gap-2 rounded-full border border-red-100 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                             >
                               <Trash2 size={16} />
-                              Excluir avaliacao
+                              Excluir avaliação
                             </button>
                           </div>
                         )}
@@ -1099,17 +1163,16 @@ function Cliente({
                   key={propriedade.id}
                   className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
                 >
-                  <div className="relative h-56 overflow-hidden">
-                    <img
-                      src={propriedade.imagem}
-                      alt={propriedade.titulo}
-                      className="h-full w-full object-cover"
-                    />
+                  <GaleriaFotosPropriedade
+                    propriedade={propriedade}
+                    alt={propriedade.titulo}
+                    className="h-56"
+                  >
                     <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow">
                       <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                      {propriedade.nota}
+                      {formatarNota(propriedade.nota)}
                     </div>
-                  </div>
+                  </GaleriaFotosPropriedade>
 
                   <div className="space-y-4 p-5">
                     <div className="flex items-start justify-between gap-3">
@@ -1159,6 +1222,165 @@ function Cliente({
         )}
       </div>
 
+      {modalAcesso && !clienteLogado && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/50 p-4">
+          <section className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <p className="flex items-center gap-2 text-sm font-medium text-slate-400">
+                  {modalAcesso === 'admin' ? <ShieldCheck size={16} /> : <UserRound size={16} />}
+                  {modalAcesso === 'admin' ? 'Area administrativa' : 'Area do cliente'}
+                </p>
+                <h2 className="mt-1 text-2xl font-bold text-slate-900">
+                  {modalAcesso === 'admin'
+                    ? 'Entrar como admin'
+                    : modo === 'entrar'
+                      ? 'Entrar como cliente'
+                      : 'Cadastrar cliente'}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setModalAcesso(null);
+                  setMensagem('');
+                }}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {modalAcesso === 'cliente' && (
+              <div className="mb-5 grid grid-cols-2 rounded-full bg-slate-100 p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModo('entrar');
+                    setMensagem('');
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    modo === 'entrar' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'
+                  }`}
+                >
+                  Entrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModo('cadastro');
+                    setMensagem('');
+                  }}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    modo === 'cadastro' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500'
+                  }`}
+                >
+                  Cadastrar
+                </button>
+              </div>
+            )}
+
+            <form
+              className="space-y-4"
+              onSubmit={
+                modalAcesso === 'admin'
+                  ? entrarAdminPublico
+                  : modo === 'entrar'
+                    ? entrarCliente
+                    : cadastrarCliente
+              }
+            >
+              {modalAcesso === 'cliente' && modo === 'cadastro' && (
+                <>
+                  <input
+                    type="text"
+                    value={formulario.nome}
+                    onChange={(event) => atualizarFormulario('nome', event.target.value)}
+                    placeholder="Nome completo"
+                    className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                  />
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition focus-within:border-slate-400 focus-within:ring-4 focus-within:ring-slate-100">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Telefone
+                    </p>
+                    <div className="grid grid-cols-[96px_1fr] gap-3 sm:grid-cols-[132px_1fr]">
+                      <label className="min-w-0">
+                        <span className="sr-only">DDD</span>
+                        <select
+                          value={formulario.ddd}
+                          onChange={(event) => atualizarFormulario('ddd', event.target.value)}
+                          className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition hover:bg-white focus:border-slate-400"
+                        >
+                          {dddsBrasil.map((grupo) => (
+                            <optgroup key={grupo.uf} label={grupo.uf}>
+                              {grupo.codigos.map((ddd) => (
+                                <option key={ddd} value={ddd}>
+                                  {ddd}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="flex h-12 min-w-0 items-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition focus-within:border-slate-400">
+                        <span className="flex h-full items-center border-r border-slate-200 px-3 text-sm font-bold text-slate-500">
+                          +55
+                        </span>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          value={formatarTelefone(formulario.telefone)}
+                          onChange={(event) =>
+                            atualizarFormulario(
+                              'telefone',
+                              event.target.value.replace(/\D/g, '').slice(0, 9)
+                            )
+                          }
+                          placeholder="99999-9999"
+                          className="h-full min-w-0 flex-1 border-none bg-transparent px-3 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <input
+                type="email"
+                value={formulario.email}
+                onChange={(event) => atualizarFormulario('email', event.target.value)}
+                placeholder={modalAcesso === 'admin' ? 'admin@travel.com' : 'Email'}
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                required
+              />
+              <input
+                type="password"
+                value={formulario.senha}
+                onChange={(event) => atualizarFormulario('senha', event.target.value)}
+                placeholder="Senha"
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-slate-400"
+                required
+              />
+
+              {mensagem && (
+                <p className="rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-600">{mensagem}</p>
+              )}
+
+              <BotaoPrimario type="submit" className="w-full">
+                {modalAcesso === 'admin' ? <ShieldCheck size={16} /> : modo === 'entrar' ? <Mail size={16} /> : <UserPlus size={16} />}
+                {modalAcesso === 'admin'
+                  ? 'Entrar no painel'
+                  : modo === 'entrar'
+                    ? 'Entrar'
+                    : 'Criar conta'}
+              </BotaoPrimario>
+            </form>
+          </section>
+        </div>
+      )}
+
       {propriedadeSelecionada && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
           <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
@@ -1177,13 +1399,11 @@ function Cliente({
             </div>
 
             <div className="grid gap-0 lg:grid-cols-[1.1fr_.9fr]">
-              <div className="h-72 overflow-hidden lg:h-full">
-                <img
-                  src={propriedadeSelecionada.imagem}
-                  alt={propriedadeSelecionada.titulo}
-                  className="h-full w-full object-cover"
-                />
-              </div>
+              <GaleriaFotosPropriedade
+                propriedade={propriedadeSelecionada}
+                alt={propriedadeSelecionada.titulo}
+                className="h-72 lg:h-full"
+              />
 
               <div className="space-y-5 p-5 lg:p-7">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1215,7 +1435,7 @@ function Cliente({
                   <div className="rounded-2xl bg-slate-50 p-4">
                     <Star size={18} className="fill-yellow-400 text-yellow-400" />
                     <p className="mt-2 text-xs text-slate-500">Nota</p>
-                    <p className="font-bold text-slate-900">{propriedadeSelecionada.nota}</p>
+                    <p className="font-bold text-slate-900">{formatarNota(propriedadeSelecionada.nota)}</p>
                   </div>
                 </div>
 

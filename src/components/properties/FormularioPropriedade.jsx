@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import BotaoPrimario from "../common/BotaoPrimario";
-
-const imagemPadrao =
-  "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80";
+import {
+  imagemPadraoPropriedade,
+  obterFotosPropriedade,
+} from "../../utils/propriedades";
 
 function FormularioPropriedade({
   aberto,
@@ -11,9 +12,11 @@ function FormularioPropriedade({
   aoSalvar,
   propriedadeEditando,
 }) {
-  const [imagemPreview, setImagemPreview] = useState(
-    propriedadeEditando?.imagem || ""
-  );
+  const [imagensPreview, setImagensPreview] = useState([]);
+
+  useEffect(() => {
+    setImagensPreview(obterFotosPropriedade(propriedadeEditando));
+  }, [propriedadeEditando]);
 
   if (!aberto) return null;
 
@@ -34,13 +37,9 @@ function FormularioPropriedade({
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
-    const arquivoImagem = formData.get("imagem");
-
-    let imagemFinal = propriedadeEditando?.imagem || imagemPadrao;
-
-    if (arquivoImagem && arquivoImagem.size > 0) {
-      imagemFinal = await converterImagemParaBase64(arquivoImagem);
-    }
+    const imagensFinais = imagensPreview.length
+      ? imagensPreview
+      : [imagemPadraoPropriedade];
 
     const novaPropriedade = {
       ...(propriedadeEditando?.id ? { id: propriedadeEditando.id } : {}),
@@ -53,7 +52,8 @@ function FormularioPropriedade({
       hospedes: Number(formData.get("hospedes")),
       nota: propriedadeEditando?.nota ?? 0,
       descricao: formData.get("descricao"),
-      imagem: imagemFinal,
+      imagem: imagensFinais[0],
+      imagens: imagensFinais,
       categorias: [
         formData.get("tipo").toLowerCase(),
         `${formData.get("quartos")} quartos`,
@@ -64,12 +64,21 @@ function FormularioPropriedade({
   }
 
   async function handleImagemChange(event) {
-    const arquivo = event.target.files[0];
+    const arquivos = Array.from(event.target.files || []);
 
-    if (!arquivo) return;
+    if (arquivos.length === 0) return;
 
-    const imagemBase64 = await converterImagemParaBase64(arquivo);
-    setImagemPreview(imagemBase64);
+    const imagensBase64 = await Promise.all(
+      arquivos.map((arquivo) => converterImagemParaBase64(arquivo))
+    );
+    setImagensPreview((imagensAtuais) => [...imagensAtuais, ...imagensBase64]);
+    event.target.value = "";
+  }
+
+  function removerImagem(indiceImagem) {
+    setImagensPreview((imagensAtuais) =>
+      imagensAtuais.filter((_, indice) => indice !== indiceImagem)
+    );
   }
 
   return (
@@ -137,12 +146,13 @@ function FormularioPropriedade({
 
             <div>
               <label className="mb-1 block text-sm font-semibold text-slate-700">
-                Foto do imóvel
+                Fotos do imovel
               </label>
               <input
-                name="imagem"
+                name="imagens"
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImagemChange}
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800"
               />
@@ -210,16 +220,30 @@ function FormularioPropriedade({
               />
             </div>
 
-            {imagemPreview && (
-              <div>
+            {imagensPreview.length > 0 && (
+              <div className="md:col-span-2">
                 <label className="mb-1 block text-sm font-semibold text-slate-700">
-                  Pré-visualização
+                  Pre-visualizacao
                 </label>
-                <img
-                  src={imagemPreview}
-                  alt="Pré-visualização do imóvel"
-                  className="h-32 w-full rounded-2xl object-cover"
-                />
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {imagensPreview.map((imagem, indice) => (
+                    <div key={`${imagem}-${indice}`} className="relative h-32 overflow-hidden rounded-2xl">
+                      <img
+                        src={imagem}
+                        alt={`Foto ${indice + 1} do imovel`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removerImagem(indice)}
+                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow transition hover:bg-white"
+                        aria-label="Remover foto"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

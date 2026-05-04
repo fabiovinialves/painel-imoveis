@@ -1,7 +1,6 @@
-import { Link } from 'react-router-dom';
-import { Bell, Hotel, Menu, UserRound } from 'lucide-react';
+import { Bell, Hotel, Menu } from 'lucide-react';
 
-function Cabecalho({ aoAbrirMenu }) {
+function Cabecalho({ aoAbrirMenu, administrador }) {
   return (
     <header className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
       <div className="flex items-center justify-between gap-4">
@@ -20,12 +19,6 @@ function Cabecalho({ aoAbrirMenu }) {
         <button className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-200">
           <span className="flex items-center gap-2"><Hotel size={16} /> Reservas</span>
         </button>
-        <Link
-          to="/cliente"
-          className="rounded-full px-4 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-        >
-          <span className="flex items-center gap-2"><UserRound size={16} /> Cliente</span>
-        </Link>
       </nav>
 
       <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-end">
@@ -40,8 +33,8 @@ function Cabecalho({ aoAbrirMenu }) {
             className="h-11 w-11 rounded-full object-cover"
           />
           <div className="pr-3">
-            <p className="text-sm font-semibold text-slate-900">Administrador</p>
-            <p className="text-xs text-slate-500">admin@travel.com</p>
+            <p className="text-sm font-semibold text-slate-900">{administrador?.nome || 'Administrador'}</p>
+            <p className="text-xs text-slate-500">{administrador?.email || 'admin@travel.com'}</p>
           </div>
         </div>
       </div>

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { MessageSquareText, Search, Star, UsersRound } from 'lucide-react';
 import CardMetrica from '../components/common/CardMetrica';
+import { formatarNota } from '../utils/formatadores';
+import { obterFotoPrincipalPropriedade } from '../utils/propriedades';
 
 function deduplicarAvaliacoes(avaliacoes) {
   const avaliacoesPorClienteEPropriedade = new Map();
@@ -30,7 +32,7 @@ function Avaliacoes({ avaliacoes = [], propriedades = [] }) {
       return {
         ...avaliacao,
         propriedadeTitulo: propriedade?.titulo || avaliacao.propriedadeTitulo || 'Propriedade removida',
-        propriedadeImagem: propriedade?.imagem,
+        propriedadeImagem: propriedade ? obterFotoPrincipalPropriedade(propriedade) : avaliacao.propriedadeImagem,
         localizacao: propriedade?.localizacao || avaliacao.localizacao || '',
       };
     });
@@ -54,11 +56,11 @@ function Avaliacoes({ avaliacoes = [], propriedades = [] }) {
 
   const media =
     avaliacoesUnicas.length === 0
-      ? '0.0'
-      : (
+      ? formatarNota(0)
+      : formatarNota(
           avaliacoesUnicas.reduce((total, avaliacao) => total + Number(avaliacao.nota), 0) /
           avaliacoesUnicas.length
-        ).toFixed(1);
+        );
 
   const clientesUnicos = new Set(avaliacoesUnicas.map((avaliacao) => avaliacao.clienteEmail)).size;
 
@@ -66,7 +68,7 @@ function Avaliacoes({ avaliacoes = [], propriedades = [] }) {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-400">Painel / Avaliacoes</p>
+          <p className="text-sm font-medium text-slate-400">Painel / Avaliações</p>
           <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Avaliacoes
           </h2>
@@ -109,7 +111,7 @@ function Avaliacoes({ avaliacoes = [], propriedades = [] }) {
         <div className="border-b border-slate-200 p-5">
           <h3 className="text-lg font-bold text-slate-900">Feedbacks recebidos</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Avaliacoes feitas pelos clientes apos o aluguel.
+            Avaliações feitas pelos clientes apos o aluguel.
           </p>
         </div>
 
@@ -156,7 +158,7 @@ function Avaliacoes({ avaliacoes = [], propriedades = [] }) {
 
           {avaliacoesFiltradas.length === 0 && (
             <div className="p-10 text-center text-sm text-slate-500">
-              Nenhuma avaliacao encontrada.
+              Nenhuma avaliação encontrada.
             </div>
           )}
         </div>

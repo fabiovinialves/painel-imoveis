@@ -10,13 +10,13 @@ import {
 } from 'lucide-react';
 
 const itensMenu = [
-  { label: 'Painel', icon: LayoutDashboard, path: '/' },
-  { label: 'Propriedades', icon: Building2, path: '/propriedades' },
-  { label: 'Usuarios', icon: Users, path: '/usuarios' },
-  { label: 'Avaliacoes', icon: Star, path: '/avaliacoes' },
+  { label: 'Painel', icon: LayoutDashboard, path: '/admin' },
+  { label: 'Propriedades', icon: Building2, path: '/admin/propriedades' },
+  { label: 'Usuarios', icon: Users, path: '/admin/usuarios' },
+  { label: 'Avaliacoes', icon: Star, path: '/admin/avaliacoes' },
 ];
 
-function ConteudoMenu({ aoFechar }) {
+function ConteudoMenu({ aoFechar, aoSair }) {
   return (
     <div className="flex h-full flex-col justify-between bg-[#fcfcfc] p-4">
       <div>
@@ -52,10 +52,24 @@ function ConteudoMenu({ aoFechar }) {
       </div>
 
       <div className="mt-6 space-y-2 border-t border-slate-200 pt-4">
-        <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+        <NavLink
+          to="/admin/configuracoes"
+          onClick={aoFechar}
+          className={({ isActive }) =>
+            `flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition ${
+              isActive
+                ? 'bg-slate-100 font-semibold text-slate-900'
+                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            }`
+          }
+        >
           <Settings size={18} /> Configuracoes
-        </button>
-        <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+        </NavLink>
+        <button
+          type="button"
+          onClick={aoSair}
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+        >
           <LogOut size={18} /> Sair
         </button>
       </div>
@@ -63,17 +77,17 @@ function ConteudoMenu({ aoFechar }) {
   );
 }
 
-function MenuLateral({ aberto, aoFechar }) {
+function MenuLateral({ aberto, aoFechar, aoSair }) {
   return (
     <>
       <aside className="hidden border-r border-slate-200 bg-[#fcfcfc] lg:block">
-        <ConteudoMenu />
+        <ConteudoMenu aoSair={aoSair} />
       </aside>
 
       {aberto && (
         <div className="fixed inset-0 z-50 bg-black/40 lg:hidden">
           <div className="h-full w-[290px] bg-white shadow-2xl">
-            <ConteudoMenu aoFechar={aoFechar} />
+            <ConteudoMenu aoFechar={aoFechar} aoSair={aoSair} />
           </div>
         </div>
       )}
