@@ -9,6 +9,9 @@ Sistema web para gerenciamento e aluguel de imóveis, com área administrativa e
 ![Lucide React](https://img.shields.io/badge/Lucide_React-111827?style=for-the-badge&logo=lucide&logoColor=white)
 ![JSON Server](https://img.shields.io/badge/JSON_Server-323330?style=for-the-badge&logo=json&logoColor=white)
 
+<img width="1907" height="942" alt="Captura de tela 2026-05-04 100541" src="https://github.com/user-attachments/assets/daa8a3f3-c852-40e8-9da9-35afd91331db" />
+
+
 ## Funcionalidades
 
 - Dashboard administrativo com indicadores dos imóveis.
